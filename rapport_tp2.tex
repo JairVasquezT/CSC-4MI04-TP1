@@ -1,0 +1,433 @@
+\documentclass[11pt,a4paper]{article}
+
+% ----------------------------------------------------
+% PACKAGES ESSENTIELS
+% ----------------------------------------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{amsmath, amssymb}
+\usepackage{siunitx}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+\usepackage{titlesec}
+\usepackage[strict]{changepage}
+\usepackage{framed}
+\usepackage{hyperref}
+
+% ----------------------------------------------------
+% PARAMÈTRES DE MISE EN PAGE
+% ----------------------------------------------------
+\geometry{margin=2.5cm}
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+\setlength{\headheight}{13.6pt}
+\addtolength{\topmargin}{-1.6pt}
+\setlength{\emergencystretch}{2em}
+
+% ----------------------------------------------------
+% COULEURS ENSTA
+% ----------------------------------------------------
+\definecolor{enstaBleuFonce}{HTML}{003366}
+\definecolor{enstaBleuClair}{HTML}{0073CF}
+\definecolor{formalshade}{rgb}{0.95,0.95,1}
+
+% ----------------------------------------------------
+% CONFIGURATION DES LIENS
+% ----------------------------------------------------
+\hypersetup{
+    colorlinks=true,
+    linkcolor=enstaBleuFonce,
+    urlcolor=blue,
+    citecolor=gray
+}
+
+% ----------------------------------------------------
+% STYLE DES SECTIONS
+% ----------------------------------------------------
+\titleformat{\section}[block]
+  {\normalfont\Large\bfseries\color{enstaBleuFonce}}
+  {\thesection}{1em}{}
+  [\vspace{0.3em}\titlerule\color{enstaBleuFonce}\vspace{0.3em}]
+
+\titleformat{\subsection}
+  {\normalfont\large\bfseries\color{enstaBleuClair}}
+  {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+  {\normalfont\normalsize\bfseries\color{black!70}}
+  {\thesubsubsection}{1em}{}
+
+% ----------------------------------------------------
+% EN-TÊTES ET PIEDS DE PAGE
+% ----------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{École Nationale des techniques avancées}
+\fancyhead[R]{CSC-4MI04}
+\fancyfoot[C]{\thepage}
+
+% ----------------------------------------------------
+% ENVIRONNEMENT FORMAL (ENCADRÉ)
+% ----------------------------------------------------
+\newenvironment{formal}{%
+\def\FrameCommand{%
+  \hspace{1pt}%
+  {\color{enstaBleuFonce}\vrule width 2pt}%
+  {\color{formalshade}\vrule width 4pt}%
+  \colorbox{formalshade}%
+}%
+\MakeFramed{\advance\hsize-\width\FrameRestore}%
+\noindent\hspace{-4.55pt}%
+\begin{adjustwidth}{}{7pt}%
+\vspace{4pt}%
+}{%
+\vspace{4pt}\end{adjustwidth}\endMakeFramed%
+}
+
+% ----------------------------------------------------
+% DÉBUT DU DOCUMENT
+% ----------------------------------------------------
+\begin{document}
+
+% ====================================================
+% PAGE DE COUVERTURE
+% ====================================================
+\begin{titlepage}
+    \centering
+    \vspace*{3.5cm}
+
+    \IfFileExists{imgs/logo_ensta_2025.png}{%
+      \includegraphics[width=0.6\textwidth]{imgs/logo_ensta_2025.png}
+    }{%
+      \fbox{\parbox[c][3cm][c]{0.6\textwidth}{\centering Logo ENSTA (optionnel)}}
+    }
+
+
+    \vspace{0.6cm}
+    {\Large CSC-4MI04 -- Reconnaissance d'images \par}
+    \vspace{0.2cm}
+    {\huge\bfseries Détection et Appariement de Points Caractéristiques \par}
+    \vspace{2.8cm}
+    {\Large MENESES GAMBOA Carlos \par}
+    {\Large VASQUEZ TORRES Jair \par}
+    \vfill
+    École Nationale des techniques avancées\\
+    Février 2026\par
+\end{titlepage}
+
+% ====================================================
+% TABLE DES MATIÈRES
+% ====================================================
+\newpage
+\tableofcontents
+\newpage
+
+% ====================================================
+% RÉSUMÉ
+% ====================================================
+\section{Résumé}
+TODO : rédiger un résumé synthétique du rapport, présentant les objectifs, les méthodes utilisées, les résultats clés et les conclusions principales. Le résumé doit être clair et concis, donnant au lecteur une vue d'ensemble rapide du contenu du rapport.
+
+% ====================================================
+% INTRODUCTION GÉNÉRALE
+% ====================================================
+\section{Introduction générale}
+  TODO : présenter les objectifs du TP, les étapes prévues, et la structure du rapport. Expliquer brièvement les concepts clés (convolution, détecteurs, descripteurs, appariement) pour contextualiser les questions à venir.
+
+% ====================================================
+% PARTIE 2
+% ====================================================
+\section{(2) Format d'images et Convolutions : Q1--Q3}
+
+\subsection{Q1 --- Convolution 2D : balayage direct vs \texttt{cv2.filter2D}}
+
+\subsubsection{Objectif}
+Comparer une implémentation directe (double boucle Python) et l'implémentation OpenCV \texttt{cv2.filter2D} sur une image en niveaux de gris, puis expliquer les écarts dus aux bords, au clipping et aux conventions d'affichage.
+
+\subsubsection{Rappels théoriques}
+Une image en niveaux de gris est une matrice \(I(y,x)\), avec une dynamique typique \([0,255]\) en \texttt{uint8}. La conversion en \texttt{float64} permet d'éviter les overflow et de conserver les valeurs négatives ou supérieures à 255.
+
+Le filtrage linéaire spatial s'écrit :
+\[
+I_f(x,y)=\sum_{i=-1}^{1}\sum_{j=-1}^{1}K(i,j)\,I(x+i,y+j)
+\]
+
+Noyau de rehaussement utilisé :
+\[
+K=\begin{bmatrix}
+0 & -1 & 0 \\
+-1 & 5 & -1 \\
+0 & -1 & 0
+\end{bmatrix}
+\]
+
+Expression locale :
+\[
+\text{val}=5I(x,y)-I(x-1,y)-I(x+1,y)-I(x,y-1)-I(x,y+1)
+\]
+
+Interprétation : amplification des hautes fréquences (bords, détails), pouvant produire overshoot et undershoot.
+
+\subsubsection{Implémentations}
+\textbf{Méthode directe.} Balayage de la zone intérieure \((1..h-2,\;1..w-2)\), puis saturation explicite :
+\[
+\mathrm{clip}(\text{val})=\min(\max(\text{val},0),255)
+\]
+
+\textbf{Méthode OpenCV.} Dans le code final :
+\begin{formal}
+\texttt{img3 = cv2.filter2D(img, -1, kernel, borderType=cv2.BORDER\_REPLICATE)}
+\end{formal}
+La sortie \texttt{img3} est RAW en \texttt{float64} (pas de clipping). Pour comparaison équitable :
+\[
+\texttt{img3\_clip}=\mathrm{clip}(\texttt{img3},0,255)
+\]
+
+\textbf{Conventions d'affichage.}
+\begin{itemize}[leftmargin=1.5em]
+  \item OpenCV : les images flottantes sont interprétées dans \([0,1]\), d'où l'usage de \texttt{img3/255.0}.
+  \item Matplotlib : normalisation implicite possible ; pour comparer, fixer \texttt{vmin=0}, \texttt{vmax=255}.
+\end{itemize}
+
+\subsubsection{Protocole expérimental}
+\begin{itemize}[leftmargin=1.5em]
+  \item Image : \texttt{FlowerGarden2.png}, niveaux de gris, \(h=240\), \(w=360\).
+  \item Zone de comparaison : intérieur \(\texttt{[1:h-2,1:w-2]}\), pour éviter les divergences dues aux bords.
+  \item Comparaison A : \texttt{img2} (clip) vs \texttt{img3} (RAW).
+  \item Comparaison B : \texttt{img2} (clip) vs \texttt{img3\_clip}.
+\end{itemize}
+
+\subsubsection{Résultats numériques}
+\textbf{Dimensions.} \(240 \times 360\).
+
+\textbf{Temps d'exécution et accélération.}
+\begin{table}[H]
+  \centering
+  \caption{Q1 -- Temps et accélération.}
+  \label{tab:q1-temps}
+  \begin{tabular}{@{}lrr@{}}
+    \toprule
+    Méthode & Temps (s) & Facteur \\
+    \midrule
+    Méthode directe & 0.167926867 & \(1.00\times\) \\
+    \texttt{cv2.filter2D} & 0.006553004 & \(25.63\times\) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+\[
+S=\frac{0.167926867}{0.006553004}\approx 25.63
+\]
+
+\textbf{Sortie RAW (\texttt{filter2D}).}
+\[
+\min(\texttt{img3})=-609.0,\qquad \max(\texttt{img3})=877.0
+\]
+
+Sur la zone intérieure (\(85204\) pixels) :
+\begin{itemize}[leftmargin=1.5em]
+  \item pixels \(<0\) : 13141,
+  \item pixels \(>255\) : 8304,
+  \item total hors plage : 21445 (\(\approx 25.17\%\)).
+\end{itemize}
+
+\textbf{Différence intérieure : \(\texttt{img2}\) (clip) vs \(\texttt{img3}\) (RAW).}
+\[
+\max=622.0,\quad \text{mean}=23.888702408337636,\quad \text{std}=61.92829613986976
+\]
+
+\textbf{Différence intérieure : \(\texttt{img2}\) (clip) vs \(\texttt{img3\_clip}\).}
+\[
+\max=0.0,\quad \text{mean}=0.0,\quad \text{std}=0.0
+\]
+
+\subsubsection{Discussion}
+L'égalité parfaite entre \texttt{img2} et \texttt{img3\_clip} confirme que les deux méthodes appliquent la même opération linéaire (même noyau) sur la zone intérieure. L'écart avec \texttt{img3} RAW provient uniquement du clipping. Le maximum \(622\) est cohérent avec un dépassement positif : \(877-255=622\).
+
+La fonction \texttt{filter2D} est nettement plus rapide car implémentée en C/C++ optimisé, tandis que la double boucle Python subit un overhead interprété élevé. La comparaison sur l'intérieur évite de confondre ces effets avec le traitement des bords.
+
+\subsubsection{Figures (emplacements)}
+\begin{figure}[H]
+  \centering
+  \IfFileExists{imgs/FlowerGarden2.png}{%
+    \includegraphics[width=0.82\textwidth]{imgs/FlowerGarden2.png}
+  }{%
+    \fbox{\parbox[c][5cm][c]{0.82\textwidth}{\centering Placeholder : \texttt{imgs/FlowerGarden2.png}}}
+  }
+  \caption{Fig Q1.1 -- Image originale.}
+  \label{fig:q1-original}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{imgs/metodo_directo.png}{%
+    \includegraphics[width=0.82\textwidth]{imgs/metodo_directo.png}
+  }{%
+    \fbox{\parbox[c][5cm][c]{0.82\textwidth}{\centering Placeholder : \texttt{imgs/metodo_directo.png}}}
+  }
+  \caption{Fig Q1.2 -- Résultat méthode directe (\texttt{img2}).}
+  \label{fig:q1-direct}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \IfFileExists{imgs/metodo_filter2d.png}{%
+    \includegraphics[width=0.82\textwidth]{imgs/metodo_filter2d.png}
+  }{%
+    \fbox{\parbox[c][5cm][c]{0.82\textwidth}{\centering Placeholder : \texttt{imgs/metodo_filter2d.png}}}
+  }
+  \caption{Fig Q1.3 -- Résultat \texttt{filter2D} après clipping (\texttt{img3\_clip}).}
+  \label{fig:q1-filter2d-clip}
+\end{figure}
+
+\subsection{Q2 --- Interprétation théorique du noyau de rehaussement}
+Rappel de l'énoncé : justifier théoriquement pourquoi le noyau utilisé agit comme un filtre de sharpening, et relier son effet aux hautes fréquences.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Exécuter/adapter \texttt{Convolutions.py} pour produire des exemples illustratifs.
+  \item Expliquer le lien noyau = identité + terme de type Laplacien (interprétation fréquentielle).
+  \item Explorer des paramètres/variantes de noyaux pour comparer l'intensité du rehaussement.
+  \item Produire des figures (image d'entrée, image filtrée, zoom sur contours).
+  \item Définir les métriques à rapporter (variation de contraste local, histogrammes, énergie des gradients).
+  \item Rédiger la discussion théorique (effets attendus, limites, artefacts).
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+\subsection{Q3 --- Gradients Ix, Iy et norme du gradient}
+Rappel de l'énoncé : modifier l'approche pour calculer les gradients horizontal et vertical, puis la norme du gradient, avec précautions de type et d'affichage.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Modifier \texttt{Convolutions.py} pour calculer \(I_x\), \(I_y\) et \(\|\nabla I\|\).
+  \item Définir les opérateurs/convolutions utilisés pour \(I_x\) et \(I_y\).
+  \item Vérifier les conventions d'affichage (valeurs négatives, normalisation, conversion de type).
+  \item Produire les figures dédiées : \(I_x\), \(I_y\), norme, comparaison visuelle.
+  \item Choisir les métriques à rapporter (min/max, distributions, sensibilité au bruit).
+  \item Expliquer les points théoriques (direction du gradient, amplitude, interprétation contour).
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+% ====================================================
+% PARTIE 3
+% ====================================================
+\section{(3) Détecteurs : Q4--Q6}
+
+\subsection{Q4 --- Détecteur de Harris : compléments d'implémentation}
+Rappel de l'énoncé : compléter \texttt{Harris.py}, calculer la réponse \(\\Theta\), utiliser une fenêtre \(W\) et extraire des maxima locaux par dilatation morphologique.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Exécuter et compléter \texttt{Harris.py} (calcul de \(\\Theta\), fenêtre \(W\)).
+  \item Implémenter/valider la détection de maxima locaux par dilatation morphologique.
+  \item Explorer les paramètres principaux (taille de fenêtre, seuil, lissage).
+  \item Produire les figures : carte de réponse et points détectés sur image.
+  \item Définir les métriques à rapporter (nombre de points, stabilité visuelle, distribution spatiale).
+  \item Expliquer le mécanisme Harris (matrice des moments, coin vs bord vs zone plate).
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+\subsection{Q5 --- Harris : paramètres, multi-échelles et contrainte de distance}
+Rappel de l'énoncé : analyser l'effet des paramètres, du multi-échelles et imposer une contrainte de distance minimale \(r\) entre maxima.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Étendre \texttt{Harris.py} pour explorer taille de fenêtre, \(\alpha\), seuils.
+  \item Ajouter l'analyse multi-échelles (pyramide ou variation d'échelle).
+  \item Implémenter la sélection de maxima avec contrainte distance \(\ge r\).
+  \item Produire les figures comparatives par réglage/échelle.
+  \item Définir les métriques (densité de points, répétabilité qualitative, couverture spatiale).
+  \item Discuter compromis robustesse/localisation et sensibilité aux paramètres.
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+\subsection{Q6 --- Comparaison ORB vs KAZE (détection)}
+Rappel de l'énoncé : comparer ORB et KAZE en détection de points d'intérêt, avec paramètres explicites et comparaison visuelle sur une paire d'images.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Exécuter \texttt{Features\_Detect.py} pour ORB et KAZE.
+  \item Documenter les paramètres utilisés pour chaque détecteur.
+  \item Produire les figures sur une paire d'images (points détectés superposés).
+  \item Définir les métriques à rapporter (nombre de points, répartition, robustesse visuelle).
+  \item Vérifier la répétabilité qualitative sous changements de vue/éclairage.
+  \item Expliquer les différences de comportement ORB vs KAZE.
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+% ====================================================
+% PARTIE 4
+% ====================================================
+\section{(4) Descripteurs et Appariement : Q7--Q9}
+
+\subsection{Q7 --- Principe des descripteurs ORB/KAZE et invariances}
+Rappel de l'énoncé : présenter le principe des descripteurs ORB/KAZE et distinguer invariances du détecteur et du descripteur (échelle, rotation).
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Décrire le pipeline détecteur + descripteur pour ORB et KAZE.
+  \item Préciser les invariances (échelle/rotation) et à quel niveau elles interviennent.
+  \item Préparer des illustrations locales (patchs/points correspondants) à extraire.
+  \item Lister les scripts/fonctions à exécuter (\texttt{Features\_Detect.py} et scripts de description).
+  \item Définir les critères d'analyse (discriminabilité, robustesse qualitative).
+  \item Ajouter une discussion théorique claire détecteur vs descripteur.
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+\subsection{Q8 --- Appariement : CrossCheck, RatioTest, FLANN}
+Rappel de l'énoncé : comparer plusieurs stratégies d'appariement et expliquer les différences de distances selon le type de descripteur.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Exécuter les scripts d'appariement (CrossCheck, RatioTest, FLANN).
+  \item Documenter les paramètres de matching (seuil ratio, nombre de voisins, index FLANN).
+  \item Produire les figures de correspondances pour chaque stratégie.
+  \item Définir les métriques à rapporter (nombre de matches, taux d'outliers, qualité visuelle).
+  \item Expliquer pourquoi les distances diffèrent selon descripteurs binaires vs flottants.
+  \item Discuter compromis précision/robustesse/coût de calcul.
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+\subsection{Q9 --- Évaluation quantitative avec transformation connue}
+Rappel de l'énoncé : mettre en place une évaluation quantitative à partir d'une transformation géométrique connue (par ex. \texttt{cv2.warpAffine}) pour mesurer précision/rappel des appariements.
+
+\begin{formal}
+\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
+\begin{itemize}[leftmargin=1.5em]
+  \item Générer des paires image-transformée avec transformation connue (\texttt{cv2.warpAffine}).
+  \item Définir un protocole d'évaluation des correspondances (vrai/faux match via géométrie).
+  \item Calculer les métriques cibles (précision, rappel, éventuellement courbes).
+  \item Comparer ORB/KAZE et les stratégies de matching dans le même protocole.
+  \item Produire les figures de synthèse (matches corrects/incorrects, visualisation d'erreurs).
+  \item Discuter les limites du protocole et les biais possibles.
+\end{itemize}
+\end{formal}
+\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+% ====================================================
+% CONCLUSION
+% ====================================================
+\section{Conclusion}
+La Q1 est finalisée avec une comparaison complète, reproductible et chiffrée entre balayage direct et \texttt{cv2.filter2D}. Les Q2 à Q9 sont structurées selon l'énoncé avec des checklists opérationnelles pour la suite du TP, sans ajout de résultats non vérifiés.
+
+\end{document}

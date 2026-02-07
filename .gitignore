@@ -6,6 +6,15 @@ __pycache__/
 # C extensions
 *.so
 
+# LaTeX auxiliary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.out
+*.synctex.gz
+*.toc
+*.log
+
 # Distribution / packaging
 .Python
 build/
