@@ -286,21 +286,43 @@ La fonction \texttt{filter2D} est nettement plus rapide car implémentée en C/C
   \label{fig:q1-filter2d-clip}
 \end{figure}
 
-\subsection{Q2 --- Interprétation théorique du noyau de rehaussement}
-Rappel de l'énoncé : justifier théoriquement pourquoi le noyau utilisé agit comme un filtre de sharpening, et relier son effet aux hautes fréquences.
+% =========================================================
+% Q2 — Rehaussement de contraste (interprétation fréquentielle)
+% =========================================================
+\subsection{Q2 --- Pourquoi le noyau r\'ealise un r\'ehaussement de contraste ?}
+\label{sec:q2_rehaussement}
 
-\begin{formal}
-\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
-\begin{itemize}[leftmargin=1.5em]
-  \item Exécuter/adapter \texttt{Convolutions.py} pour produire des exemples illustratifs.
-  \item Expliquer le lien noyau = identité + terme de type Laplacien (interprétation fréquentielle).
-  \item Explorer des paramètres/variantes de noyaux pour comparer l'intensité du rehaussement.
-  \item Produire des figures (image d'entrée, image filtrée, zoom sur contours).
-  \item Définir les métriques à rapporter (variation de contraste local, histogrammes, énergie des gradients).
-  \item Rédiger la discussion théorique (effets attendus, limites, artefacts).
-\end{itemize}
-\end{formal}
-\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+Le noyau utilis\'e dans l'exemple est :
+\[
+K=
+\begin{bmatrix}
+0 & -1 & 0\\
+-1 & 5 & -1\\
+0 & -1 & 0
+\end{bmatrix}
+\]
+et le filtrage s'\'ecrit localement :
+\[
+I_f(x,y)=5I(x,y)-I(x\!-\!1,y)-I(x\!+\!1,y)-I(x,y\!-\!1)-I(x,y\!+\!1).
+\]
+
+Tout d'abord, la somme des coefficients vaut \(5-4=1\), ce qui implique un gain DC \'egal \`a 1 : sur une zone uniforme (tous les pixels \'egaux \`a une constante \(c\)), on obtient \(I_f=c\). Le filtre pr\'eserve donc globalement la luminance des r\'egions plates.
+
+Ensuite, ce noyau correspond \`a une accentuation par soustraction du Laplacien. Pour le Laplacien discret \`a 4-voisins :
+\[
+\Delta I = I(x\!-\!1,y)+I(x\!+\!1,y)+I(x,y\!-\!1)+I(x,y\!+\!1)-4I(x,y),
+\]
+on a :
+\[
+I-\Delta I = 5I(x,y)-\big(I(x\!-\!1,y)+I(x\!+\!1,y)+I(x,y\!-\!1)+I(x,y\!+\!1)\big),
+\]
+ce qui est exactement l'expression du filtre. Or, le Laplacien met en \'evidence les variations rapides d'intensit\'e (bords, d\'etails) : la combinaison \(I-\Delta I\) ajoute une composante passe-haut \`a l'image. Ainsi, les diff\'erences locales sont amplifi\'ees (un pixel plus clair que ses voisins devient encore plus clair, et inversement), ce qui produit un r\'ehaussement de contraste au voisinage des contours. Ce ph\'enom\`ene peut engendrer des valeurs hors de \([0,255]\) (overshoot/undershoot), justifiant l'usage d'une saturation (clipping) pour une visualisation en 8 bits.
+
+Du point de vue fr\'equentiel, un filtrage spatial lin\'eaire correspond \`a une multiplication dans le domaine de Fourier :
+\[
+\widehat{I_f}(u,v)=\widehat{I}(u,v)\,\widehat{K}(u,v).
+\]
+Les basses fr\'equences (petits \(u,v\)) repr\'esentent les variations lentes (\'eclairage, r\'egions uniformes), tandis que les hautes fr\'equences correspondent aux variations rapides (bords, textures fines). Le Laplacien \'etant un op\'erateur de d\'erivation seconde, sa transform\'ee de Fourier est proportionnelle \`a \((u^2+v^2)\widehat{I}(u,v)\) (\'a un signe et une constante pr\`es), ce qui signifie qu'il amplifie les hautes fr\'equences et annule la composante continue. En cons\'equence, le filtre \(I-\Delta I\) garde un gain proche de 1 \`a tr\`es basse fr\'equence (coh\'erent avec \(\sum K = 1\)), mais augmente le gain lorsque \(\sqrt{u^2+v^2}\) cro\^it : les composantes hautes fr\'equences sont renforc\'ees, ce qui explique le r\'ehaussement de contraste observ\'e sur les contours.
 
 \subsection{Q3 --- Gradients Ix, Iy et norme du gradient}
 Rappel de l'énoncé : modifier l'approche pour calculer les gradients horizontal et vertical, puis la norme du gradient, avec précautions de type et d'affichage.
