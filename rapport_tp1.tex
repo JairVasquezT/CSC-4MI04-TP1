@@ -455,20 +455,44 @@ ORB est idéal pour la rapidité (temps réel), mais \textbf{KAZE est plus perfo
 \section{(4) Descripteurs et Appariement : Q7--Q9}
 
 \subsection{Q7 --- Principe des descripteurs ORB/KAZE et invariances}
-Rappel de l'énoncé : présenter le principe des descripteurs ORB/KAZE et distinguer invariances du détecteur et du descripteur (échelle, rotation).
 
-\begin{formal}
-\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
-\begin{itemize}[leftmargin=1.5em]
-  \item Décrire le pipeline détecteur + descripteur pour ORB et KAZE.
-  \item Préciser les invariances (échelle/rotation) et à quel niveau elles interviennent.
-  \item Préparer des illustrations locales (patchs/points correspondants) à extraire.
-  \item Lister les scripts/fonctions à exécuter (\texttt{Features\_Detect.py} et scripts de description).
-  \item Définir les critères d'analyse (discriminabilité, robustesse qualitative).
-  \item Ajouter une discussion théorique claire détecteur vs descripteur.
+Une fois les points d'intérêt localisés, l'étape suivante consiste à calculer un \textbf{descripteur} : un vecteur numérique qui caractérise le voisinage du point. Cette section détaille les principes de ORB et KAZE ainsi que la gestion des invariances géométriques.
+
+\subsubsection{Principe des descripteurs}
+
+\begin{itemize}
+    \item \textbf{ORB (Oriented FAST and Rotated BRIEF) :} Il utilise un descripteur binaire nommé \textbf{BRIEF}. Son principe est de comparer l'intensité de paires de pixels séléctionnées aléatoirement autour du point. Le résultat est une chaîne de bits. C'est une méthode extrêmement rapide car la comparaison entre deux descripteurs se fait par une simple distance de Hamming (XOR).
+    
+    \item \textbf{KAZE :} Il repose sur un descripteur plus robuste, proche de SIFT, calculé à partir des \textbf{gradients locaux} dans l'espace d'échelle non-linéaire. Il analyse la distribution des orientations des gradients autour du point, ce qui lui confère une plus grande précision et une meilleure résistance au bruit par rapport aux descripteurs binaires.
 \end{itemize}
-\end{formal}
-\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+
+
+\subsubsection{Analyse des invariances : Détecteur vs Descripteur}
+
+Il est fondamental de distinguer à quel niveau intervient chaque invariance pour garantir un appariement (matching) réussi :
+
+\begin{enumerate}
+    \item \textbf{Invariance à l'échelle :}
+    \begin{itemize}
+        \item \textbf{Côté Détecteur :} L'invariance est gérée par l'espace d'échelle. Le détecteur (pyramide pour ORB, diffusion pour KAZE) trouve le point à sa "taille caractéristique". Dans \texttt{Features\_Detect.py}, cela correspond au diamètre du cercle affiché.
+        \item \textbf{Côté Descripteur :} Le descripteur adapte la taille de sa zone d'analyse (le "patch") en fonction de l'échelle trouvée par le détecteur. Ainsi, le vecteur reste identique que l'objet soit proche ou loin.
+    \end{itemize}
+
+    \item \textbf{Invariance à la rotation :}
+    \begin{itemize}
+        \item \textbf{Côté Détecteur :} Le détecteur calcule une \textbf{orientation dominante} pour chaque point (matérialisée par le rayon à l'intérieur des cercles dans notre script). Pour ORB, cela se fait via le calcul du moment d'intensité du patch.
+        \item \textbf{Côté Descripteur :} Avant de créer le vecteur, le descripteur "tourne" le voisinage pour l'aligner sur cette orientation. Le descripteur est donc calculé dans un repère local normalisé, ce qui le rend indépendant de l'orientation de la caméra.
+    \end{itemize}
+\end{enumerate}
+
+\subsubsection{Critères d'analyse}
+
+Pour évaluer la qualité d'un couple détecteur/descripteur, nous retenons deux critères :
+\begin{itemize}
+    \item \textbf{La répétabilité (Détecteur) :} Capacité à retrouver le même point sur deux images (vue en Q6).
+    \item \textbf{La discriminabilité (Descripteur) :} Capacité du descripteur à être assez unique pour ne pas être confondu avec un autre point. Ici, KAZE est théoriquement plus discriminatif que ORB grâce à l'utilisation des gradients.
+\end{itemize}
 
 \subsection{Q8 --- Appariement : CrossCheck, RatioTest, FLANN}
 Rappel de l'énoncé : comparer plusieurs stratégies d'appariement et expliquer les différences de distances selon le type de descripteur.
