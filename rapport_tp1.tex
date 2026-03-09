@@ -11,6 +11,7 @@
 \usepackage{amsmath, amssymb}
 \usepackage{siunitx}
 \usepackage{caption}
+\usepackage{subcaption}
 \usepackage{booktabs}
 \usepackage{float}
 \usepackage{xcolor}
@@ -20,6 +21,9 @@
 \usepackage[strict]{changepage}
 \usepackage{framed}
 \usepackage{hyperref}
+\usepackage{grffile}
+\usepackage[T1]{fontenc}
+\usepackage{underscore}
 
 % ----------------------------------------------------
 % PARAMÈTRES DE MISE EN PAGE
@@ -378,21 +382,73 @@ Rappel de l'énoncé : analyser l'effet des paramètres, du multi-échelles et i
 \textit{Statut : section préparée, aucun résultat chiffré ajouté.}
 
 \subsection{Q6 --- Comparaison ORB vs KAZE (détection)}
-Rappel de l'énoncé : comparer ORB et KAZE en détection de points d'intérêt, avec paramètres explicites et comparaison visuelle sur une paire d'images.
+L'objectif de cette question est de comparer les performances de deux détecteurs de points d'intérêt : \textbf{ORB} (basé sur FAST) et \textbf{KAZE} (basé sur la diffusion non-linéaire).
 
-\begin{formal}
-\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
-\begin{itemize}[leftmargin=1.5em]
-  \item Exécuter \texttt{Features\_Detect.py} pour ORB et KAZE.
-  \item Documenter les paramètres utilisés pour chaque détecteur.
-  \item Produire les figures sur une paire d'images (points détectés superposés).
-  \item Définir les métriques à rapporter (nombre de points, répartition, robustesse visuelle).
-  \item Vérifier la répétabilité qualitative sous changements de vue/éclairage.
-  \item Expliquer les différences de comportement ORB vs KAZE.
+\subsubsection{Paramètres et principes théoriques}
+
+D'après le cours (Chapitre 3), la détection repose sur la recherche de structures locales stables à travers les échelles.
+\begin{itemize}
+    \item \textbf{ORB :} Utilise le détecteur de coins \textbf{FAST} sur une pyramide d'images gaussienne. Dans notre script, il est limité à \texttt{nfeatures=250} avec un \texttt{scaleFactor=2}.
+    \item \textbf{KAZE :} Utilise un espace d'échelle \textbf{non-linéaire} (diffusion anisotrope). Cela permet de lisser l'image tout en préservant les bords nets. Nous utilisons un \texttt{threshold=0.001} et une \texttt{diffusivity=2} (Charbonnier).
 \end{itemize}
-\end{formal}
-\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
 
+\subsubsection{Résultats expérimentaux et comparaison visuelle}
+
+Les tests effectués sur la paire d'images \texttt{torb\_small} donnent les résultats suivants :
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|c|}
+\hline
+\textbf{Détecteur} & \textbf{Temps d'exécution (s)} & \textbf{Observation visuelle} \\ \hline
+ORB                & 0.086 s                       & Points très regroupés, ignore le poteau. \\ \hline
+KAZE               & 0.338 s                       & Répartition homogène, détecte le poteau. \\ \hline
+\end{tabular}
+\caption{Comparaison des performances de détection.}
+\end{table}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{imgs/Q6_orb.png}
+    \caption{Détection des points d'intérêt avec \textbf{ORB}. On observe une forte concentration de points sur les zones de texte et les contours contrastés.}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\textwidth]{imgs/Q6_kaze.png}
+    \caption{Détection des points d'intérêt avec \textbf{KAZE}. La répartition est plus homogène et inclut des structures fines comme le poteau vertical.}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Image_Pairs/torb_small1.png}
+        \caption{Image originale 1}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{Image_Pairs/torb_small2.png}
+        \caption{Image originale 2}
+    \end{subfigure}
+    \caption{Paire d'images originales utilisées pour le test (\texttt{torb\_small}).}
+\end{figure}
+
+\subsubsection{Analyse des observations}
+
+\begin{itemize}
+    \item \textbf{Répartition et densité :} J'ai observé que les cercles de \textbf{ORB} sont souvent très grands et "empilés" les uns sur les autres dans les zones de fort contraste. Cela s'explique par la nature du détecteur FAST qui sature vite sur les textures denses. À l'inverse, \textbf{KAZE} présente des cercles plus petits et mieux distribués, ce qui indique une meilleure précision spatiale.
+    
+    \item \textbf{Robustesse (le cas du poteau) :} Une observation clé est que \textbf{ORB ne détecte rien sur le poteau} (barre verticale) ajouté dans l'image. En revanche, \textbf{KAZE parvient à y placer des points}. Cela démontre que la diffusion non-linéaire de KAZE est plus efficace pour extraire des caractéristiques de structures géométriques lisses ou fines que ORB ignore.
+    
+    \item \textbf{Répétabilité :} Visuellement, la répétabilité de KAZE semble supérieure. En observant les mêmes objets entre l'image 1 et l'image 2, les points de KAZE restent plus stables en position et en taille, ce qui facilitera l'étape d'appariement (matching).
+\end{itemize}
+
+\subsubsection{Conclusion}
+ORB est idéal pour la rapidité (temps réel), mais \textbf{KAZE est plus performant} pour une analyse géométrique précise, car il capture des détails fins (comme le poteau) et offre une meilleure répartition des points sur l'ensemble de la scène.
 % ====================================================
 % PARTIE 4
 % ====================================================
