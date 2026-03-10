@@ -57,9 +57,17 @@ time = (t2 - t1)/ cv2.getTickFrequency()
 print("Détection points et calcul descripteurs :",time,"s")
 # Calcul de l'appariement
 t1 = cv2.getTickCount()
-# Paramètres de FLANN 
-FLANN_INDEX_KDTREE = 0
-index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+# Paramètres de FLANN (en fonction du type de descripteur)
+if detector == 1: # Si es ORB
+    FLANN_INDEX_LSH = 6
+    index_params = dict(algorithm = FLANN_INDEX_LSH,
+                        table_number = 6,      # 12 par defaut
+                        key_size = 12,         # 20 par defaut
+                        multi_probe_level = 1) # 2 par defaut
+else: # Si es KAZE
+    FLANN_INDEX_KDTREE = 0
+    index_params = dict(algorithm = FLANN_INDEX_KDTREE, trees = 5)
+
 search_params = dict(checks=50) 
 
 flann = cv2.FlannBasedMatcher(index_params,search_params)
