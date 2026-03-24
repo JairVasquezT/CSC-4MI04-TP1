@@ -1032,18 +1032,17 @@ On observe une \textbf{très bonne densité} de points sur l'ensemble des struct
 \subsection{Conclusion sur les performances}
 Ce test quantitatif démontre que l'utilisation d'un seuil de tolérance géométrique permet de filtrer efficacement les faux appariements. Le score de 95.21\% valide la fiabilité du descripteur ORB pour des transformations modérées, tout en soulignant l'importance de la qualité des points d'intérêt initiaux.
 
-% ====================================================
-% CONCLUSION GÉNÉRALE
-% ====================================================
+
 \section{Conclusion Générale}
 
-Ce travail pratique nous a permis d'explorer l'intégralité de la chaîne de traitement en vision par ordinateur, de la manipulation des filtres de convolution (Q1--Q3) à la validation quantitative d'un système d'appariement robuste (Q8--Q9). 
+Ce travail pratique nous a permis de parcourir l'ensemble de la chaîne de traitement en vision par ordinateur, de la manipulation fondamentale des images à la validation de systèmes de reconnaissance robustes. 
 
-L'étude comparative entre les descripteurs \textbf{ORB} et \textbf{KAZE} met en lumière un compromis fondamental entre efficacité et précision. Nos tests ont démontré que bien qu'ORB soit extrêmement performant en termes de temps de calcul (jusqu'à 10 fois plus rapide que KAZE), il reste vulnérable aux textures répétitives et au bruit, nécessitant des stratégies de filtrage comme le \textit{Ratio Test} à 0.85 pour maintenir une densité utile. À l'inverse, KAZE, grâce à ses descripteurs flottants et l'utilisation de l'espace d'échelle non-linéaire, offre une précision géométrique supérieure, parvenant à isoler des détails fins tels que les éléments du poteau central, invisibles pour ORB.
+La première phase du TP (Q1-Q3) a mis en évidence l'importance du prétraitement par \textbf{convolutions}. Nous avons observé comment les filtres de lissage (Gaussien) et de détection de contours (Sobel, Laplacien) conditionnent la qualité de l'extraction d'information. Ces bases théoriques ont trouvé leur application directe dans le détecteur de coins de \textbf{Harris} (Q4-Q5), soulignant que la sélection de points d'intérêt stables est le pilier de toute analyse géométrique ultérieure.
 
-L'étape cruciale de l'évaluation quantitative (Q9) a apporté une rigueur mathématique à nos observations visuelles. En obtenant une \textbf{précision de 95.21\%} sur une transformation affine contrôlée, nous avons validé la fiabilité de notre implémentation. Cette approche démontre qu'en milieu industriel ou académique, l'analyse qualitative doit toujours être complétée par des métriques objectives (Inliers, Precision/Recall).
+La phase centrale de comparaison entre \textbf{ORB} et \textbf{KAZE} (Q6-Q8) a révélé un compromis critique entre \textit{efficacité} et \textit{précision}. Nos expérimentations ont démontré qu'ORB, bien que dix fois plus rapide grâce à ses descripteurs binaires et sa distance de Hamming, est sujet au bruit dans les zones de faible contraste. À l'inverse, KAZE, opérant dans un espace d'échelle non-linéaire avec des descripteurs flottants (distance L2), s'est avéré capable de capturer des détails structurels fins, tels que le poteau et sa bocina, là où ORB échouait.
 
-En conclusion, le choix du détecteur et du descripteur doit être dicté par les contraintes de l'application : ORB est idéal pour la robotique mobile en temps réel, tandis que KAZE s'impose pour la reconstruction 3D de précision. Ces concepts constituent les piliers fondamentaux de technologies actuelles telles que la réalité augmentée et la navigation autonome (SLAM)"
-, "nOctaveLayers" et photogrammétrie (SFM)."
+Enfin, l'évaluation quantitative de la Q9 a apporté la rigueur nécessaire pour valider nos observations. En atteignant une \textbf{précision de 95,21\%} sur une transformation affine contrôlée (rotation de 10°), nous avons prouvé la robustesse de l'implémentation. Les erreurs minimales observées confirment que le choix d'une stratégie de matching adaptée (Ratio Test ou Cross-Check) est tout aussi crucial que le choix du détecteur lui-même.
+
+En conclusion, ce TP démontre que le choix des algorithmes doit être guidé par les contraintes de l'application finale : ORB pour la robotique en temps réel (SLAM) et KAZE pour la métrologie ou la reconstruction 3D de haute précision (SfM). Ces outils constituent aujourd'hui le socle technologique de domaines en pleine expansion tels que la navigation autonome et la réalité augmentée.
 
 \end{document}
