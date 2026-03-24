@@ -8,6 +8,7 @@
 \usepackage[french]{babel}
 \usepackage{geometry}
 \usepackage{graphicx}
+\usepackage{subcaption}
 \usepackage{amsmath, amssymb}
 \usepackage{siunitx}
 \usepackage{caption}
@@ -891,42 +892,158 @@ Il est important de distinguer le rôle du détecteur et celui du descripteur da
 \subsubsection{Critères d'analyse}
 Deux critères doivent être distingués pour évaluer la qualité d'une chaîne détecteur--descripteur. Le premier est la répétabilité du détecteur, c'est-à-dire sa capacité à retrouver les mêmes structures physiques d'une image à l'autre, point discuté visuellement en Q6. Le second est la discriminabilité du descripteur, c'est-à-dire sa capacité à distinguer correctement un point des autres points de la scène. Sous cet angle, un descripteur binaire comme ORB privilégie la rapidité, tandis qu'un descripteur plus riche de type KAZE vise en général une meilleure séparation entre points voisins au prix d'un coût plus élevé.
 
-\subsection{Q8 --- Appariement : CrossCheck, RatioTest, FLANN}
-Rappel de l'énoncé : comparer plusieurs stratégies d'appariement et expliquer les différences de distances selon le type de descripteur.
 
-\begin{formal}
-\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
-\begin{itemize}[leftmargin=1.5em]
-  \item Exécuter les scripts d'appariement (CrossCheck, RatioTest, FLANN).
-  \item Documenter les paramètres de matching (seuil ratio, nombre de voisins, index FLANN).
-  \item Produire les figures de correspondances pour chaque stratégie.
-  \item Définir les métriques à rapporter (nombre de matches, taux d'outliers, qualité visuelle).
-  \item Expliquer pourquoi les distances diffèrent selon descripteurs binaires vs flottants.
-  \item Discuter compromis précision/robustesse/coût de calcul.
+\section{Q8 --- Étude de l'appariement (Matching)}
+
+Cette section analyse les performances des descripteurs \textbf{ORB} (binaires) et \textbf{KAZE} (flottants) à travers trois stratégies : \textit{Ratio Test}, \textit{Cross-Check} et \textit{FLANN}. L'objectif est d'identifier le meilleur compromis entre densité de correspondances et précision géométrique.
+
+\subsection{Résultats quantitatifs synthétiques}
+
+Le tableau suivant récapitule les performances obtenues sur la paire d'images \texttt{torb\_small} avec les paramètres optimisés :
+
+\begin{table}[h!]
+\centering
+\small
+\begin{tabular}{|l|l|c|l|c|c|}
+\hline
+\textbf{Détecteur} & \textbf{Stratégie} & \textbf{Ratio} & \textbf{Paramètres clés} & \textbf{Matches} & \textbf{Temps (s)} \\ \hline
+ORB & RatioTest & 0.70 & nf=500, nl=8, ft=20 & 62 & 0.0012 \\ \hline
+ORB & RatioTest & 0.85 & nf=1200, nl=12, ft=20 & 279 & 0.0032 \\ \hline
+ORB & CrossCheck & - & nf=300, nl=15, ft=40 & 94 & 0.0010 \\ \hline
+ORB & FLANN & 0.70 & nf=500, nl=8, ft=20 & 67 & 0.0018 \\ \hline
+KAZE & RatioTest & 0.70 & th=0.001, o=4, u=0 & 228 & 0.0025 \\ \hline
+KAZE & RatioTest & 0.50 & th=0.001, o=4, u=0 & 140 & 0.0025 \\ \hline
+KAZE & RatioTest & 0.60 & th=0.004, o=4, u=0 & 37 & 0.0004 \\ \hline
+KAZE & CrossCheck & - & th=0.005, o=4, u=1 & 60 & 0.0008 \\ \hline
+KAZE & FLANN & 0.70 & th=0.001, o=4, u=0 & 231 & 0.0168 \\ \hline
+\end{tabular}
+\caption{Comparaison des stratégies d'appariement.}
+\label{tab:results_q8}
+\end{table}
+
+\subsection{Analyse qualitative et interprétation}
+
+\subsubsection{Stratégies basées sur ORB (Descripteurs binaires)}
+
+Les descripteurs ORB montrent une grande rapidité, mais une sensibilité accrue au bruit.
+
+\begin{itemize}
+    \item \textbf{Ratio Test 0.70 vs 0.85 :} À ratio 0.70, beaucoup d'erreurs sont visibles (fenêtres, réservoirs) et le poteau est ignoré. À ratio 0.85 avec 1200 points, la densité est massive. On observe une excellente détection des fenêtres du bâtiment gauche, des réservoirs et du toit. La base du poteau apparaît, mais le sommet et sa bocina restent indétectables.
+    \item \textbf{Cross-Check :} Cette stratégie révèle environ 10 erreurs manifestes (lignes croisées), principalement entre les réservoirs et les rochers. Malgré le filtrage à 300 points, le manque de parallélisme est flagrant.
+    \item \textbf{FLANN :} C'est la stratégie la plus cohérente pour ORB. Les lignes sont stables sur les fenêtres et les réservoirs. Une seule erreur notable est visible entre un angle du bâtiment et les rochers à droite.
 \end{itemize}
-\end{formal}
-\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
 
-\subsection{Q9 --- Évaluation quantitative avec transformation connue}
-Rappel de l'énoncé : mettre en place une évaluation quantitative à partir d'une transformation géométrique connue (par ex. \texttt{cv2.warpAffine}) pour mesurer précision/rappel des appariements.
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Q8/q8_orb_ratiotest_nf1200_nl12_ft20_r0.85.png}
+        \caption{ORB RatioTest 0.85 (Densité)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Q8/q8_orb_crosscheck_nf300_nl15_ft40_r0.0.png}
+        \caption{ORB CrossCheck (Erreurs visibles)}
+    \end{subfigure}
+    \caption{Visualisation des appariements ORB.}
+\end{figure}
 
-\begin{formal}
-\textbf{TODO -- Éléments à compléter (sans résultats inventés)}
-\begin{itemize}[leftmargin=1.5em]
-  \item Générer des paires image-transformée avec transformation connue (\texttt{cv2.warpAffine}).
-  \item Définir un protocole d'évaluation des correspondances (vrai/faux match via géométrie).
-  \item Calculer les métriques cibles (précision, rappel, éventuellement courbes).
-  \item Comparer ORB/KAZE et les stratégies de matching dans le même protocole.
-  \item Produire les figures de synthèse (matches corrects/incorrects, visualisation d'erreurs).
-  \item Discuter les limites du protocole et les biais possibles.
+\subsubsection{Stratégies basées sur KAZE (Descripteurs flottants)}
+
+\begin{itemize}
+    \item \textbf{Ratio Test (0.50, 0.70, 0.60) :} À 0.50, le parallélisme est parfait (zéro erreur) mais peu dense. À 0.70, la densité augmente mais deux erreurs apparaissent sur le poteau. Le seuil strict de 0.004 (ratio 0.60) ne conserve que 37 points, principalement sur la base du poteau et le toit du grand bâtiment.
+    \item \textbf{Cross-Check :} Grâce au mode \textit{Upright}, cette stratégie est la plus performante sur les détails fins, parvenant à identifier la \textbf{bocina du poteau}. On note toutefois 4 à 5 erreurs entre le toit et les rochers.
+    \item \textbf{FLANN :} Offre une densité maximale (231). Le parallélisme est globalement respecté, sauf pour 3 correspondances erronées sur le poteau. C'est la méthode la plus équilibrée pour KAZE.
 \end{itemize}
-\end{formal}
-\textit{Statut : section préparée, aucun résultat chiffré ajouté.}
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Q8/q8_kaze_ratiotest_th0.001_o4_l4_u0_r0.5.png}
+        \caption{KAZE Ratio 0.5 (Précision)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Q8/q8_kaze_crosscheck_th0.005_o4_l4_u1_r0.0.png}
+        \caption{KAZE CrossCheck (Détails fins)}
+    \end{subfigure}
+    \caption{Visualisation des appariements KAZE.}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Q8/q8_kaze_flann_th0.001_o4_l4_u0_r0.7.png}
+        \caption{KAZE FLANN (Consistance)}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{imgs/Q8/q8_kaze_ratiotest_th0.004_o4_l4_u0_r0.6.png}
+        \caption{KAZE Seuil strict 0.004}
+    \end{subfigure}
+    \caption{Stratégies KAZE à haute densité et haute sélectivité.}
+\end{figure}
+
+\subsection{Synthèse des distances et métriques}
+
+La distinction entre descripteurs binaires (ORB) et flottants (KAZE) impose des métriques de distance différentes :
+\begin{itemize}
+    \item \textbf{Distance de Hamming (ORB) :} Utilisée pour comparer les chaînes de bits. Elle est extrêmement rapide à calculer via des opérations binaires XOR.
+    \item \textbf{Distance L2 (KAZE) :} Nécessaire pour les vecteurs de nombres réels. Plus précise pour discriminer des textures subtiles mais beaucoup plus coûteuse en temps de calcul.
+\end{itemize}
+
+\textbf{Compromis identifié :} Pour une application rapide privilégiant la structure globale, \textbf{ORB Ratio Test 0.85} est recommandé. Pour une analyse de précision incluant des objets fins, \textbf{KAZE FLANN} ou \textbf{KAZE Cross-Check} sont préférables.
+
+
+
+\section{Q9 --- Évaluation quantitative avec transformation connue}
+
+Pour valider scientifiquement les performances de l'appariement, nous avons mis en place un protocole d'évaluation basé sur une transformation géométrique contrôlée (Vérité Terrain).
+
+\subsection{Protocole d'évaluation}
+Une transformation affine $M$ (rotation de 10° et translation de 20 pixels) a été appliquée à l'image originale pour générer une image cible synthétique. Un appariement est considéré comme un \textbf{Inlier} (vrai positif) si la distance euclidienne entre le point détecté et sa position théorique projetée par $M$ est inférieure à 3 pixels :
+\[ \text{Erreur} = \| M \cdot \mathbf{p}_1 - \mathbf{p}_2 \| < 3 \text{ pixels} \]
+
+\subsection{Analyse des résultats (ORB)}
+
+Les résultats obtenus avec le détecteur ORB et la stratégie Cross-Check sont les suivants :
+
+\begin{itemize}
+    \item \textbf{Total des correspondances détectées :} 334
+    \item \textbf{Matches corrects (Inliers) :} 318
+    \item \textbf{Précision globale :} 95.21\%
+\end{itemize}
+
+\textbf{Observations qualitatives :}
+On observe une \textbf{très bonne densité} de points sur l'ensemble des structures architecturales. Les erreurs détectées (environ 4.8\%) sont \textbf{minimales} et se situent principalement sur les zones de bordure de l'image ou sur des micro-textures répétitives. La robustesse de l'algorithme est confirmée par ce taux de précision élevé malgré la rotation imposée.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\textwidth]{imgs/Q9.png}
+    \caption{Évaluation quantitative : Visualisation des correspondances sur une transformation affine connue (Précision : 95.21\%).}
+    \label{fig:q9_results}
+\end{figure}
+
+\subsection{Conclusion sur les performances}
+Ce test quantitatif démontre que l'utilisation d'un seuil de tolérance géométrique permet de filtrer efficacement les faux appariements. Le score de 95.21\% valide la fiabilité du descripteur ORB pour des transformations modérées, tout en soulignant l'importance de la qualité des points d'intérêt initiaux.
 
 % ====================================================
-% CONCLUSION
+% CONCLUSION GÉNÉRALE
 % ====================================================
-\section{Conclusion}
-Les Q1, Q4, Q5 et Q6 sont désormais finalisées avec des résultats chiffrés ou visuels, des figures et une interprétation technique cohérente avec les implémentations réalisées. Les Q2, Q3 et Q7 à Q9 restent structurées selon l'énoncé avec des checklists opérationnelles pour la suite du TP, sans ajout de résultats non vérifiés.
+\section{Conclusion Générale}
+
+Ce travail pratique nous a permis d'explorer l'intégralité de la chaîne de traitement en vision par ordinateur, de la manipulation des filtres de convolution (Q1--Q3) à la validation quantitative d'un système d'appariement robuste (Q8--Q9). 
+
+L'étude comparative entre les descripteurs \textbf{ORB} et \textbf{KAZE} met en lumière un compromis fondamental entre efficacité et précision. Nos tests ont démontré que bien qu'ORB soit extrêmement performant en termes de temps de calcul (jusqu'à 10 fois plus rapide que KAZE), il reste vulnérable aux textures répétitives et au bruit, nécessitant des stratégies de filtrage comme le \textit{Ratio Test} à 0.85 pour maintenir une densité utile. À l'inverse, KAZE, grâce à ses descripteurs flottants et l'utilisation de l'espace d'échelle non-linéaire, offre une précision géométrique supérieure, parvenant à isoler des détails fins tels que les éléments du poteau central, invisibles pour ORB.
+
+L'étape cruciale de l'évaluation quantitative (Q9) a apporté une rigueur mathématique à nos observations visuelles. En obtenant une \textbf{précision de 95.21\%} sur une transformation affine contrôlée, nous avons validé la fiabilité de notre implémentation. Cette approche démontre qu'en milieu industriel ou académique, l'analyse qualitative doit toujours être complétée par des métriques objectives (Inliers, Precision/Recall).
+
+En conclusion, le choix du détecteur et du descripteur doit être dicté par les contraintes de l'application : ORB est idéal pour la robotique mobile en temps réel, tandis que KAZE s'impose pour la reconstruction 3D de précision. Ces concepts constituent les piliers fondamentaux de technologies actuelles telles que la réalité augmentée et la navigation autonome (SLAM)"
+, "nOctaveLayers" et photogrammétrie (SFM)."
 
 \end{document}

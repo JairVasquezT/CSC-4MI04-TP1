@@ -1,0 +1,10 @@
+Detecteur,Strategie,Ratio,Parametres,Nb_Matches,Temps
+orb,ratiotest,0.7,"nf=500,nl=8,ft=20",62,0.0012
+orb,ratiotest,0.85,"nf=1200,nl=12,ft=20",279,0.0032
+orb,crosscheck,0.0,"nf=300,nl=15,ft=40",94,0.0007
+orb,flann,0.7,"nf=500,nl=8,ft=20",67,0.0022
+kaze,ratiotest,0.7,"th=0.001,o=4,u=0",228,0.0128
+kaze,ratiotest,0.5,"th=0.001,o=4,u=0",140,0.0017
+kaze,ratiotest,0.6,"th=0.004,o=4,u=0",37,0.0004
+kaze,crosscheck,0.0,"th=0.005,o=4,u=1",60,0.0004
+kaze,flann,0.7,"th=0.001,o=4,u=0",231,0.0153
